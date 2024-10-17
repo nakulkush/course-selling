@@ -11,7 +11,7 @@ app.use("/api/v1/course", courseRouter);
 
 async function main() {
   mongoose.connect(
-    "mongodb+srv://nakul:nakul123@cluster0.12u49.mongodb.net/course-selling"
+    ""
   );
   console.log("connected");
   app.listen(3000);
