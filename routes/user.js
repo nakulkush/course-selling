@@ -1,10 +1,12 @@
 const express = require("express");
 const Router = express.Router;
 const userRouter = Router();
-const { signUpValidation } = require("./zod");
+const { signUpValidation, signInValidation } = require("./zod");
 const { userModel } = require("../db");
 const { z } = require("zod");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const JWT_USER_PASSWORD = "IamAuser0000";
 
 userRouter.use(express.json());
 userRouter.post("/signup", async function (req, res) {
@@ -41,10 +43,40 @@ userRouter.post("/signup", async function (req, res) {
   }
 });
 
-userRouter.post("/signin", function (req, res) {
-  res.json({
-    message: "signin",
-  });
+userRouter.post("/signin", async function (req, res) {
+  try {
+    const validatedData = signInValidation.parse(req.body);
+    const { email, password } = validatedData;
+
+    const user = await userModel.findOne({ email });
+
+    if (!user) {
+      res.status(401).json({ message: "Invalid Email or Password" });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      res.status(401).json({ message: "Invalid Email or Password" });
+    }
+
+    if (user && isPasswordValid) {
+      const token = jwt.sign(
+        {
+          id: user._id,
+        },
+        JWT_USER_PASSWORD
+      );
+
+      res.json({
+        token,
+      });
+    }
+  } catch (e) {
+    res.json({
+      message: e.errors,
+    });
+  }
 });
 
 userRouter.get("/purchases", function (req, res) {
